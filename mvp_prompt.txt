@@ -1,0 +1,44 @@
+You are my coding assistant.
+
+Write me a Python script that does the following:
+
+Download the 2023 Form 5500 "small plan" dataset from the Department of Labor:
+URL: https://www.dol.gov/sites/dolgov/files/ebsa/researchers/data/5500-data/2023/2023-sf.zip
+
+Extract the CSV file inside the ZIP.
+
+Load the CSV using pandas.
+
+Find all rows where the sponsor name (field: SPONS_DFE_NAME) matches approximately "THE INTERSECT GROUP" using fuzzy matching (allowing slight misspellings or differences).
+
+Print out for each match:
+
+Sponsor Name
+
+Filing ID (field: ACK_ID)
+
+Plan Year (field: PLAN_YEAR)
+
+Requirements:
+
+Use requests to download the file.
+
+Use zipfile to extract it.
+
+Use pandas to load and process the CSV.
+
+Use rapidfuzz or fuzzywuzzy to do fuzzy matching of names.
+
+Handle large file sizes gracefully (use low_memory=False in pandas read_csv).
+
+Please organize the code cleanly into functions:
+
+download_file(url, output_path)
+
+extract_zip(zip_path, extract_to_folder)
+
+find_matching_rows(csv_path, target_name)
+
+main()
+
+Add simple print statements so I can see the script progress as it runs.

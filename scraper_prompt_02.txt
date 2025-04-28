@@ -1,0 +1,68 @@
+You are my coding assistant.
+
+Write a Python script that uses Selenium to automate downloading a Form 5500 filing ZIP file from the Department of Labor's new EFAST2 5500 Search portal.
+
+Here are the exact steps the script must follow:
+
+Open a Chrome browser session (headless preferred).
+
+Navigate to https://www.efast.dol.gov/5500Search/.
+
+Locate the dropdown menu with id="categoryType".
+
+Change the dropdown selection from the default "Plan Name" to "ACK ID".
+
+Locate the search input box (where Filing ID should be entered).
+
+Enter the provided Filing ID (ACK_ID) into the search box.
+
+Click the Search button to submit the search.
+
+Wait for search results to appear.
+
+Locate the "Download Filing" button associated with the correct Filing ID result.
+
+Click the "Download Filing" button to download the ZIP file containing the filing attachments.
+
+Save the ZIP file to a local folder, structured like this: ./downloads/{filing_id}.zip.
+
+Extract the ZIP file into a subfolder: ./downloads/{filing_id}/.
+
+After extraction, print the names of all PDFs inside the extracted folder for verification.
+
+Requirements:
+
+Use selenium with a ChromeDriver (assume proper ChromeDriver installation).
+
+Set up Chrome options to automatically accept file downloads to the ./downloads/ folder without prompting.
+
+Implement basic retry logic: If the page doesn't load or the search fails, retry up to 3 times with delays.
+
+Use zipfile to extract the ZIP once downloaded.
+
+Print basic console logs:
+
+"Filing ID searched: {filing_id}"
+
+"ZIP downloaded to: {path}"
+
+"Extracted PDFs: {list of PDFs}"
+
+Additional Notes:
+
+If downloading the ZIP fails (e.g., no search results), print a clear error instead of crashing.
+
+Focus only on automating the download and extraction for now — do not parse the PDFs yet.
+
+Organize the code cleanly into functions:
+
+setup_browser(download_dir)
+
+search_and_download_filing(driver, filing_id)
+
+extract_zip(zip_path, extract_to_dir)
+
+main()
+
+Assume that Filing IDs are provided one at a time for now.
+We will batch process multiple Filing IDs in a future phase.
