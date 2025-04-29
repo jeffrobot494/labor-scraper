@@ -1,0 +1,40 @@
+Hi Michael,
+
+Here's my proposal for the SmartInsurance app (working title).
+
+1. Create wireframe images of the webapp frontend and sample output for Michael to confirm everything looks right (2.5 hours)
+2. Setup web hosting and database (2 hours)
+3. Use perplexity to find the current list of companies and their EINS from PE firm name (5 hours)
+4. Find all relevant files in the DoL database (Form 5500s and Schedule As for all plans) (5 hours)
+5. For each company, download all files sequentially without triggering DoL anti-bot protections (5 hours)
+6. Parse the data from the files (number of employees, premiums, brokerage fees, self-funded, etc) (2.5 hours)
+7. Summarize the information for each company and create a slide deck with per-company breakdown and all-company overview (5 hours)
+8. Build simple web app frontend for queuing requests, downloading files, handling errors (5 hours)
+9. Testing, debugging, polish (5 hours)
+
+QUESTIONS:
+1) Is it acceptable if we can only find 8 out of 10 companies listed on a PE firm's website? 7 out of 10? What's the number? Feel free to say 10 out of 10.
+2) It's possible we may miss some forms from the DoL website and therefore show lower total premiums for some companies. How much of that is acceptable? What if we show a company's premiums to be 10% lower than in reality? 20%? Is that acceptable? It may not be an issue at all, or it may require extra error-checking. I know that this is the single most important piece of information that the app presents, so knowing the acceptable margin of error is important. 
+
+TOTAL HOURS
+37
+
+RATE
+$50 per hour
+
+TOTAL COST
+$1,850
+
+Two things I should have brought up before this: I prefer to build this as a website. You will be able to access it from any browser. There will be a login page so that only you can use it. There may be hosting costs associated with it, probably around $10 a month. Also, each use of the perplexity AI costs $.03 on average. It will take several dozen calls to collect all the info we need for each firm. So, in total, for each firm you get a summary on, it will cost you $1 to $2.
+
+TIMELINE
+1) On the first day work begins, Bo will deliver wireframes of the webapp frontend and sample output for Michael to review and make changes.
+2) On the fifth day after work begins (possibly subject to delays) Bo will deliver an MVP of the web app for Michael's review. Michael may take as long as he likes to test it and gather any feedback he may have. Michael will provide that feedback to Bo for the final version of the app.
+3) After feedback is received, exact number of days TBD, Bo will deliver the final version of the app.
+
+DELIVERABLES
+1) The MVP will be delivered to Michael via a link with username and password information. Bo and Michael can do a Zoom walkthrough of the app. It will have all the main functionality: gathering company data by firm, downloading and parsing relevant forms, and summarizing information. However, it won't be perfect. For example, data collection on a firm's company's may be incomplete, some forms from the DoL website may be missing, and some features (like queuing up multiple firms for data collection) may be missing.
+2) The final web app will be delivered with full functionality, along with website hosting information. At that point we will need to attach Michael's credit cards to the perplexity AI service and the web hosting service.
+
+PAYMENT:
+Bo would like $925 upfront, and $925 upon delivery of the final app.

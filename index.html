@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartInsurance App Proposal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            font-size: 22px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .scope-item {
+            margin-bottom: 10px;
+            display: flex;
+        }
+        .scope-number {
+            min-width: 30px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .scope-content {
+            flex: 1;
+        }
+        .hours {
+            margin-left: 10px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .summary-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .cost-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .cost-table th {
+            text-align: left;
+            background-color: #f2f2f2;
+            padding: 12px;
+        }
+        .cost-table td {
+            padding: 12px;
+            border-top: 1px solid #eee;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 2px solid #ddd;
+        }
+        .note {
+            background-color: #fffaed;
+            padding: 15px;
+            border-left: 4px solid #f39c12;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .questions {
+            background-color: #eef7fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .timeline-item, .deliverable-item {
+            margin-bottom: 15px;
+            position: relative;
+            padding-left: 25px;
+        }
+        .timeline-item:before, .deliverable-item:before {
+            content: "•";
+            color: #3498db;
+            font-size: 20px;
+            position: absolute;
+            left: 5px;
+        }
+        .payment {
+            background-color: #e8f4f8;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SmartInsurance App Proposal</h1>
+            <p>Prepared exclusively for Michael</p>
+        </div>
+
+        <h2>Project Scope & Hours</h2>
+        <div class="scope-item">
+            <div class="scope-number">1.</div>
+            <div class="scope-content">Create wireframe images of the webapp frontend and sample output for Michael to confirm everything looks right</div>
+            <div class="hours">(2.5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">2.</div>
+            <div class="scope-content">Setup web hosting and database</div>
+            <div class="hours">(2 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">3.</div>
+            <div class="scope-content">Use perplexity to find the current list of companies and their EINS from PE firm name</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">4.</div>
+            <div class="scope-content">Find all relevant files in the DoL database (Form 5500s and Schedule As for all plans)</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">5.</div>
+            <div class="scope-content">For each company, download all files sequentially without triggering DoL anti-bot protections</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">6.</div>
+            <div class="scope-content">Parse the data from the files (number of employees, premiums, brokerage fees, self-funded, etc)</div>
+            <div class="hours">(2.5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">7.</div>
+            <div class="scope-content">Summarize the information for each company and create a slide deck with per-company breakdown and all-company overview</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">8.</div>
+            <div class="scope-content">Build simple web app frontend for queuing requests, downloading files, handling errors</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+        <div class="scope-item">
+            <div class="scope-number">9.</div>
+            <div class="scope-content">Testing, debugging, polish</div>
+            <div class="hours">(5 hours)</div>
+        </div>
+
+        <h2>Questions</h2>
+        <div class="questions">
+            <p><strong>1)</strong> Is it acceptable if we can only find 8 out of 10 companies listed on a PE firm's website? 7 out of 10? What's the number? Feel free to say 10 out of 10.</p>
+            <p><strong>2)</strong> It's possible we may miss some forms from the DoL website and therefore show lower total premiums for some companies. How much of that is acceptable? What if we show a company's premiums to be 10% lower than in reality? 20%? Is that acceptable? It may not be an issue at all, or it may require extra error-checking. I know that this is the single most important piece of information that the app presents, so knowing the acceptable margin of error is important.</p>
+        </div>
+
+        <h2>Cost Summary</h2>
+        <table class="cost-table">
+            <tr>
+                <th>Item</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td>Total Hours</td>
+                <td>37</td>
+            </tr>
+            <tr>
+                <td>Hourly Rate</td>
+                <td>$50</td>
+            </tr>
+            <tr class="total-row">
+                <td>Total Cost</td>
+                <td>$1,850</td>
+            </tr>
+        </table>
+
+        <div class="note">
+            <p><strong>Additional Costs:</strong> The solution will be built as a website accessible from any browser with a secure login. There will be hosting costs of approximately $10/month. Each use of the perplexity AI costs approximately $0.03, requiring several dozen calls per firm, totaling $1-$2 per firm summary.</p>
+        </div>
+
+        <h2>Timeline</h2>
+        <div class="timeline-item">
+            <p><strong>Day 1:</strong> Wireframes of the webapp frontend and sample output delivered for review and feedback.</p>
+        </div>
+        <div class="timeline-item">
+            <p><strong>Day 5:</strong> MVP delivery for testing (subject to possible delays). Michael can take as much time as needed for testing and gathering feedback.</p>
+        </div>
+        <div class="timeline-item">
+            <p><strong>After Feedback:</strong> Final version delivered (exact timeline TBD based on feedback).</p>
+        </div>
+
+        <h2>Deliverables</h2>
+        <div class="deliverable-item">
+            <p><strong>MVP:</strong> Delivered via a link with secure login credentials. A Zoom walkthrough will be arranged. The MVP will include core functionality (company data gathering, form downloading/parsing, and information summarization), though some features may be incomplete.</p>
+        </div>
+        <div class="deliverable-item">
+            <p><strong>Final Web App:</strong> Delivered with complete functionality and hosting information. At this stage, Michael's credit cards will need to be attached to the perplexity AI service and web hosting service.</p>
+        </div>
+
+        <div class="payment">
+            <p>Payment Terms: $925 upfront, $925 upon delivery of the final app</p>
+        </div>
+    </div>
+</body>
+</html>

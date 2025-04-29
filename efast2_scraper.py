@@ -18,50 +18,330 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 
-def setup_browser(download_dir):
-    """
-    Set up Chrome browser with appropriate options for automated downloading
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
+
+def take_debug_screenshot(driver, name="debug"):
+    """Take a screenshot for debugging purposes"""
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    filename = f"{name}_{timestamp}.png"
+    driver.save_screenshot(filename)
+    print(f"Screenshot saved: {filename}")
+    return filename
+
+def click_download_icon(driver):
+    wait = WebDriverWait(driver, 20)
     
-    Args:
-        download_dir (str): Directory to save downloaded files
+    # Take a screenshot before looking for the icon
+    take_debug_screenshot(driver, "before_download_click")
     
-    Returns:
-        webdriver.Chrome: Configured Chrome WebDriver instance
-    """
-    # Create download directory if it doesn't exist
+    # Print the page title and URL for debugging
+    print(f"Current page title: {driver.title}")
+    print(f"Current URL: {driver.current_url}")
+    
+    # Try multiple approaches to find and click the download element
+    # NEW APPROACH: Look for direct download link in the row of results
+    try:
+        print("Approach 0: Looking for direct download link...")
+        # Try to find any link containing "Download" text
+        download_links = driver.find_elements(By.XPATH, "//a[contains(text(), 'Download')]")
+        if len(download_links) > 0:
+            print(f"Found {len(download_links)} direct download links")
+            
+            # Click the first download link
+            link = download_links[0]
+            print(f"First link text: {link.text}, href: {link.get_attribute('href')}")
+            
+            # Try JavaScript click first
+            try:
+                driver.execute_script("arguments[0].click();", link)
+                print("✅ JavaScript click on direct download link succeeded")
+                return True
+            except Exception as e:
+                print(f"JavaScript click failed: {e}")
+                
+                # Try regular click
+                try:
+                    link.click()
+                    print("✅ Regular click on direct download link succeeded")
+                    return True
+                except Exception as e2:
+                    print(f"Regular click failed: {e2}")
+    except Exception as e:
+        print(f"Approach 0 failed: {e}")
+    
+    # Try finding the download button based on SPAN or Button text
+    try:
+        print("Approach 0.5: Looking for download button or span...")
+        # Try buttons or spans with Download text
+        elements = driver.find_elements(By.XPATH, "//*[contains(text(), 'Download') and (self::button or self::span)]")
+        if len(elements) > 0:
+            print(f"Found {len(elements)} elements with 'Download' text")
+            
+            # Click the first element
+            element = elements[0]
+            print(f"Element tag: {element.tag_name}, text: {element.text}")
+            
+            driver.execute_script("arguments[0].click();", element)
+            print("✅ JavaScript click on element with 'Download' text succeeded")
+            return True
+    except Exception as e:
+        print(f"Approach 0.5 failed: {e}")
+        
+    # Try to find any clickable element in the last cell of the result row
+    try:
+        print("Approach 1: Looking for interactive element in the last cell...")
+        # Find the result table
+        table = driver.find_element(By.CLASS_NAME, "usa-table")
+        rows = table.find_elements(By.TAG_NAME, "tr")
+        
+        if len(rows) > 1:  # Skip header
+            row = rows[1]
+            cells = row.find_elements(By.TAG_NAME, "td")
+            
+            if cells:
+                # Focus on the last or second-to-last cell (often contains actions)
+                for cell_index in [-1, -2]:  # Try last cell, then second-to-last
+                    try:
+                        cell = cells[cell_index]
+                        print(f"Examining cell {cell_index}: {cell.text}")
+                        
+                        # Look for any interactive elements in this cell
+                        for selector in ["a", "button", "svg", "span[role='button']", "span[onclick]", "div[onclick]", "i.fa"]:
+                            elements = cell.find_elements(By.CSS_SELECTOR, selector)
+                            if elements:
+                                print(f"Found {len(elements)} {selector} elements in the cell")
+                                element = elements[0]
+                                
+                                # Try JavaScript click
+                                driver.execute_script("arguments[0].click();", element)
+                                print(f"✅ JavaScript click on {selector} in cell {cell_index} succeeded")
+                                return True
+                    except IndexError:
+                        print(f"Cell index {cell_index} out of range")
+                        continue
+    except Exception as e:
+        print(f"Approach 1 failed: {e}")
+    
+    # Original approaches below
+    try:
+        # Look for any SVG with afs-cursor-pointer class
+        print("Approach 2: Looking for SVG with afs-cursor-pointer class...")
+        svg_elements = driver.find_elements(By.CSS_SELECTOR, "svg.afs-cursor-pointer")
+        print(f"Found {len(svg_elements)} matching SVG elements")
+        
+        if len(svg_elements) > 0:
+            svg = svg_elements[0]
+            print(f"First SVG classes: {svg.get_attribute('class')}")
+            
+            # For SVG elements, we need a different approach since they might not have a click method
+            # Try finding a parent element that's clickable
+            try:
+                # Find the parent or ancestor element that might be clickable
+                clickable_parent = driver.execute_script(
+                    "return arguments[0].closest('a') || arguments[0].closest('button') || arguments[0].parentElement", 
+                    svg
+                )
+                
+                if clickable_parent:
+                    print(f"Found clickable parent: {clickable_parent.tag_name}")
+                    driver.execute_script("arguments[0].click();", clickable_parent)
+                    print("✅ JavaScript click on SVG parent succeeded")
+                    
+                    # Wait for download to start
+                    time.sleep(5)
+                    
+                    # Check for any files in the download directory (including PDFs)
+                    download_dir = os.path.abspath("./downloads")
+                    for attempt in range(30):  # Check for 30 seconds
+                        files = os.listdir(download_dir)
+                        download_files = [f for f in files if f.endswith(('.zip', '.pdf')) and not f.endswith('.download')]
+                        if download_files:
+                            print(f"Download detected: {download_files}")
+                            return True
+                        print(f"Waiting for download to appear... {attempt+1}/30")
+                        time.sleep(1)
+                    
+                    # If we get here, the click succeeded but no download appeared
+                    print("Download may be in progress, return True to continue...")
+                    return True
+                    
+                else:
+                    print("No clickable parent found, falling back to ActionChains")
+            except Exception as e:
+                print(f"JavaScript parent click failed: {e}")
+                
+            # Fall back to ActionChains
+            try:
+                actions = ActionChains(driver)
+                actions.move_to_element(svg).pause(0.5).click().perform()
+                print("✅ ActionChains click on SVG succeeded")
+                
+                # Wait for download to start
+                time.sleep(5)
+                
+                # Check for any files in the download directory (including PDFs)
+                download_dir = os.path.abspath("./downloads")
+                for attempt in range(30):  # Check for 30 seconds
+                    files = os.listdir(download_dir)
+                    download_files = [f for f in files if f.endswith(('.zip', '.pdf')) and not f.endswith('.download')]
+                    if download_files:
+                        print(f"Download detected: {download_files}")
+                        return True
+                    print(f"Waiting for download to appear... {attempt+1}/30")
+                    time.sleep(1)
+                
+                # If we get here, the click succeeded but no download appeared
+                print("Download may be in progress, return True to continue...")
+                return True
+            except Exception as e2:
+                    print(f"ActionChains click failed: {e2}")
+    except Exception as e:
+        print(f"Approach 2 failed: {e}")
+    
+    # Try to find the TD containing the download icon
+    try:
+        print("Approach 3: Looking for TD with table-padding-spec class...")
+        td_elements = driver.find_elements(By.CSS_SELECTOR, "td.table-padding-spec")
+        print(f"Found {len(td_elements)} matching TD elements")
+        
+        if len(td_elements) > 0:
+            td = td_elements[0]
+            print(f"First TD classes: {td.get_attribute('class')}")
+            
+            driver.execute_script("arguments[0].click();", td)
+            print("✅ JavaScript click on TD succeeded")
+            return True
+    except Exception as e:
+        print(f"Approach 3 failed: {e}")
+    
+    # Look for any a tag with file_download in the href
+    try:
+        print("Approach 4: Looking for link with file_download...")
+        links = driver.find_elements(By.XPATH, "//use[contains(@xlink:href, 'file_download')]")
+        print(f"Found {len(links)} matching links")
+        
+        if len(links) > 0:
+            link = links[0]
+            print(f"Link href: {link.get_attribute('xlink:href')}")
+            
+            # Try to find the parent SVG and click that
+            parent_svg = driver.execute_script("return arguments[0].closest('svg')", link)
+            if parent_svg:
+                driver.execute_script("arguments[0].click();", parent_svg)
+                print("✅ JavaScript click on parent SVG succeeded")
+                return True
+    except Exception as e:
+        print(f"Approach 4 failed: {e}")
+    
+    # Final desperate attempt: try to click anything that might be a download button
+    try:
+        print("Approach 5: Trying all potential download elements...")
+        
+        # Common selectors for download elements
+        selectors = [
+            "button[data-testid*='download']",
+            "a[data-testid*='download']",
+            "button[aria-label*='download']",
+            "a[aria-label*='download']",
+            "button[title*='download']",
+            "a[title*='download']",
+            "button.download",
+            "a.download",
+            "button.icon-download",
+            "a.icon-download",
+            "*[role='button'][aria-label*='download']",
+            ".download-button",
+            ".download-link"
+        ]
+        
+        for selector in selectors:
+            elements = driver.find_elements(By.CSS_SELECTOR, selector)
+            if elements:
+                print(f"Found {len(elements)} elements matching selector: {selector}")
+                element = elements[0]
+                driver.execute_script("arguments[0].click();", element)
+                print(f"✅ JavaScript click on element with selector '{selector}' succeeded")
+                return True
+    except Exception as e:
+        print(f"Approach 5 failed: {e}")
+    
+    # If all else fails, take a screenshot and dump the HTML
+    take_debug_screenshot(driver, "download_icon_not_found")
+    
+    # Save HTML for inspection
+    with open("page_source.html", "w", encoding="utf-8") as f:
+        f.write(driver.page_source)
+    print("Saved page source to page_source.html")
+    
+    print("❌ All approaches to find and click download icon failed")
+    return False
+
+def setup_browser(download_dir, headless=True):
+    # Get absolute path to download directory
     download_path = os.path.abspath(download_dir)
     os.makedirs(download_path, exist_ok=True)
-    
     print(f"Setting up Chrome browser with download directory: {download_path}")
     
-    # Configure Chrome options
-    options = Options()
-    #options.add_argument('--headless=new')  # Use 'new' headless mode for Chrome 109+
-    options.add_argument('--disable-gpu')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--window-size=1920,1080')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--disable-infobars')
-    options.add_argument('--disable-blink-features=AutomationControlled')
+    chrome_options = Options()
+    chrome_options.add_argument("--window-size=1920,1080")
+    if headless:
+        chrome_options.add_argument("--headless=new")
     
-    # Enable file downloads in headless mode
-    prefs = {
+    # Disable automation detection
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    
+    # Configure download behavior
+    chrome_prefs = {
+        "profile.default_content_settings.popups": 0,
         "download.default_directory": download_path,
-        "download.prompt_for_download": False,
         "download.directory_upgrade": True,
-        "safebrowsing.enabled": True
+        "download.prompt_for_download": False,
+        "safebrowsing.enabled": True,
+        "safebrowsing.disable_download_protection": True,
+        "plugins.always_open_pdf_externally": True
     }
-    options.add_experimental_option("prefs", prefs)
+    chrome_options.add_experimental_option("prefs", chrome_prefs)
+
+    driver = webdriver.Chrome(options=chrome_options)
     
-    # Create and return Chrome driver
-    driver = webdriver.Chrome(options=options)
+    # Patch navigator.webdriver to False to avoid detection
+    driver.execute_cdp_cmd(
+        "Page.addScriptToEvaluateOnNewDocument",
+        {
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                })
+            """
+        },
+    )
     
-    # Set implicit wait time
-    driver.implicitly_wait(10)
+    # Set page load timeout
+    driver.set_page_load_timeout(60)
+    
+    # Set window size explicitly
+    driver.set_window_size(1920, 1080)
+    
+    # Enable downloads in headless Chrome
+    if headless:
+        driver.execute_cdp_cmd(
+            "Page.setDownloadBehavior", 
+            {
+                "behavior": "allow",
+                "downloadPath": download_path
+            }
+        )
     
     return driver
+
 
 def search_and_download_filing(driver, filing_id, max_retries=3):
     """
@@ -74,6 +354,9 @@ def search_and_download_filing(driver, filing_id, max_retries=3):
     
     Returns:
         bool: True if download appears successful, False otherwise
+    
+    Note: This function MUST exit immediately after a successful download click
+    to prevent any further page interactions that might interrupt the download.
     """
     # URL for DOL EFAST2 5500 Search portal
     efast2_url = "https://www.efast.dol.gov/5500Search/"
@@ -84,7 +367,7 @@ def search_and_download_filing(driver, filing_id, max_retries=3):
             driver.get(efast2_url)
             
             # Wait for page to load by checking for the presence of the search form
-            WebDriverWait(driver, 30).until(
+            WebDriverWait(driver, 2).until(
                 EC.presence_of_element_located((By.ID, "categoryType"))
             )
             
@@ -93,7 +376,7 @@ def search_and_download_filing(driver, filing_id, max_retries=3):
             # Look for and click the close button by its ID
             try:
                 # Wait for the close button to be clickable
-                close_button = WebDriverWait(driver, 10).until(
+                close_button = WebDriverWait(driver, 2).until(
                     EC.element_to_be_clickable((By.ID, "button.closeXBtn"))
                 )
                 
@@ -159,60 +442,61 @@ def search_and_download_filing(driver, filing_id, max_retries=3):
             print(f"Verified text in search field: '{entered_value}'")
             
             # Click the Search button to submit the search
-            search_button = driver.find_element(By.ID, "searchButton")
-            search_button.click()
+            submit_button = driver.find_element(By.XPATH, "//button[@class='usa-button' and @type='submit']")
+            submit_button.click()
             
             # Wait for search results to appear
             print("Waiting for search results...")
-            WebDriverWait(driver, 30).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "search-table"))
-            )
-            
-            # Look for the specific filing ID in the results table
-            results_table = driver.find_element(By.CLASS_NAME, "search-table")
-            rows = results_table.find_elements(By.TAG_NAME, "tr")
-            
-            # Skip header row
-            download_button = None
-            for row in rows[1:]:
-                cells = row.find_elements(By.TAG_NAME, "td")
-                if cells and filing_id in cells[0].text:
-                    # Find the download button in this row
-                    download_button = row.find_element(By.XPATH, ".//a[contains(text(), 'Download Filing')]")
-                    break
-            
-            if download_button:
-                print("Found filing in search results. Clicking download button...")
+            try:
+                WebDriverWait(driver, 10).until(  # Increased timeout
+                    EC.presence_of_element_located((By.CLASS_NAME, "usa-table"))
+                )
+                print("Search results table found")
                 
-                # Click to download the ZIP file
-                download_button.click()
+                # Take a screenshot of the search results
+                take_debug_screenshot(driver, "search_results")
                 
-                # Wait for download to complete (timeout after 60 seconds)
-                # We'll assume download is complete after a short wait
-                # This could be improved by checking for the actual file
-                print("Waiting for download to complete...")
-                time.sleep(10)  # Simple wait for download to start/complete
+                # Print some information about the table
+                tables = driver.find_elements(By.CLASS_NAME, "usa-table")
+                print(f"Found {len(tables)} tables with class 'usa-table'")
                 
-                # Check if file exists
-                expected_zip_path = os.path.join(os.path.abspath("downloads"), f"{filing_id}.zip")
+                if len(tables) > 0:
+                    table = tables[0]
+                    rows = table.find_elements(By.TAG_NAME, "tr")
+                    print(f"Table has {len(rows)} rows")
+                    
+                    # Print a sample of the first row content
+                    if len(rows) > 1:  # Skip header row
+                        first_row = rows[1]
+                        cells = first_row.find_elements(By.TAG_NAME, "td")
+                        print(f"First result row has {len(cells)} cells")
+                        cell_texts = [cell.text for cell in cells]
+                        print(f"First row content: {cell_texts}")
+                        
+                        # Attempt to click the download icon
+                        print("Attempting to click download icon...")
+                        download_success = click_download_icon(driver)
+                        if download_success:
+                            print("Download initiated successfully")
+                            # We need to return immediately after a successful click to avoid interfering with the download
+                            print("Download started - returning now to avoid interfering with the browser")
+                            # IMPORTANT: Return immediately after successful download click
+                            return True
+                        else:
+                            print("Failed to click download icon")
+            except TimeoutException:
+                print("❌ Search results table not found within timeout")
+                take_debug_screenshot(driver, "no_search_results")
                 
-                # Wait a bit longer for the file to appear
-                wait_time = 0
-                while not os.path.exists(expected_zip_path) and wait_time < 30:
-                    time.sleep(1)
-                    wait_time += 1
+                # Check if there are any error messages
+                error_elements = driver.find_elements(By.CLASS_NAME, "usa-alert--error")
+                if len(error_elements) > 0:
+                    print(f"Error message found: {error_elements[0].text}")
                 
-                if os.path.exists(expected_zip_path):
-                    print(f"ZIP downloaded to: {expected_zip_path}")
-                    return True
-                else:
-                    print(f"ZIP file not found at expected location: {expected_zip_path}")
-                    if attempt < max_retries:
-                        print(f"Retrying in {2 ** attempt} seconds...")
-                        time.sleep(2 ** attempt)
+                if attempt < max_retries:
+                    print(f"Retrying in {2 ** attempt} seconds...")
+                    time.sleep(2 ** attempt)
                     continue
-            else:
-                print("Filing not found in search results.")
                 return False
                 
         except (TimeoutException, NoSuchElementException) as e:
@@ -270,31 +554,80 @@ def main(filing_id=None):
     """
     # Default filing ID if none provided
     if not filing_id:
-        filing_id = "20230924160904NAL0004813043001"  # Example filing ID
+        filing_id = "20240924160451NAL0013030593001"  # Example filing ID
     
     # Ensure downloads directory exists
     downloads_dir = "./downloads"
-    os.makedirs(downloads_dir, exist_ok=True)
+    downloads_abs_path = os.path.abspath(downloads_dir)
+    os.makedirs(downloads_abs_path, exist_ok=True)
     
     print(f"Starting EFAST2 scraper for filing ID: {filing_id}")
+    print(f"Downloads will be saved to: {downloads_abs_path}")
     
-    # Setup browser
-    driver = setup_browser(downloads_dir)
+    # Clear any existing files with the same name
+    for extension in ['.zip', '.pdf']:
+        potential_file_path = os.path.join(downloads_abs_path, f"{filing_id}{extension}")
+        if os.path.exists(potential_file_path):
+            print(f"Removing existing file: {potential_file_path}")
+            try:
+                os.remove(potential_file_path)
+            except Exception as e:
+                print(f"Error removing existing file: {e}")
+    
+    # Setup browser - using non-headless mode for better download handling
+    driver = setup_browser(downloads_abs_path, False)
     
     try:
         # Search and download filing
         success = search_and_download_filing(driver, filing_id)
         
         if success:
-            # Define ZIP path and extraction directory
-            zip_path = os.path.join(downloads_dir, f"{filing_id}.zip")
-            extract_dir = os.path.join(downloads_dir, filing_id)
+            print("Download was initiated successfully")
+            print("Waiting for download to complete...")
+
+            # Wait longer for downloads to complete
+            time.sleep(10)
             
-            # Extract the ZIP file
-            extract_zip(zip_path, extract_dir)
+            # Check for downloaded files
+            downloaded_files = os.listdir(downloads_abs_path)
+            print(f"Files in download directory: {downloaded_files}")
+            
+            # Filter downloaded files
+            zip_files = [f for f in downloaded_files if f.endswith('.zip')]
+            pdf_files = [f for f in downloaded_files if f.endswith('.pdf')]
+            
+            if zip_files:
+                print(f"Found ZIP files: {zip_files}")
+                # Process ZIP files
+                for zip_file in zip_files:
+                    zip_path = os.path.join(downloads_abs_path, zip_file)
+                    extract_dir = os.path.join(downloads_abs_path, os.path.splitext(zip_file)[0])
+                    print(f"Extracting {zip_file} to {extract_dir}")
+                    extract_zip(zip_path, extract_dir)
+                    
+            elif pdf_files:
+                print(f"Found PDF files: {pdf_files}")
+                print("PDF files do not need extraction, they can be used directly.")
+                for pdf_file in pdf_files:
+                    print(f"Downloaded PDF: {os.path.join(downloads_abs_path, pdf_file)}")
+                
+            else:
+                print("No ZIP or PDF files found in the download directory.")
+                print(f"All files in directory: {downloaded_files}")
+                
+                # Check for incomplete downloads
+                incomplete_downloads = [f for f in downloaded_files if f.endswith('.download')]
+                if incomplete_downloads:
+                    print(f"Found incomplete downloads: {incomplete_downloads}")
+                    print("Download may still be in progress. Wait for downloads to complete manually.")
+                    
         else:
-            print("Failed to download filing ZIP file")
+            print("Failed to initiate file download")
     finally:
+        # Take a final screenshot before closing
+        if driver:
+            take_debug_screenshot(driver, "final_state")
+            
         # Clean up WebDriver instance
         print("Closing browser...")
         driver.quit()
